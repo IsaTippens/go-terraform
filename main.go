@@ -26,7 +26,7 @@ func loadConfig(path string) (*Config, error) {
 }
 
 func main() {
-	// load in config file
+	// load in config file (load from parameter or default to config.yml)
 	// format:
 	// - name: string
 	//
@@ -34,7 +34,14 @@ func main() {
 	// -endpoint /health returns 200 OK
 	// -endpoint / returns "Hello {config.name}"
 
-	config, err := loadConfig("config.yml")
+	var config *Config
+	var err error
+	if len(os.Args) > 1 {
+		config, err = loadConfig(os.Args[1])
+	} else {
+		config, err = loadConfig("config.yml")
+	}
+
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
