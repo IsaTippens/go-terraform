@@ -1,0 +1,63 @@
+name: Build and Release Go Binary
+
+# This workflow is triggered ONLY on a push of a tag matching 'v*.*.*'
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch: # Allows you to run this manually from the Actions tab
+
+jobs:
+  build-and-upload:
+    name: Build Go Binary and Upload to S3
+    runs-on: ubuntu-latest
+    
+    # These permissions are required for OIDC (OpenID Connect)
+    # This is the secure, password-less way to talk to AWS
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22' # Or your preferred Go version
+
+      - name: Get version from tag
+        run: echo "APP_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+
+      - name: Build Go Application for Linux
+        env:
+          GOOS: linux
+          GOARCH: amd64
+        run: |
+          echo "Building version ${{ env.APP_VERSION }}..."
+          mkdir -p build
+          # This compiles your app for a standard x64 Linux server
+          # and places the binary in a 'build' directory
+          go build -v -o build/web-app ./...
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # Replace with the ARN of the IAM Role you create
+          role-to-assume: arn:aws:iam::[YOUR_AWS_ACCOUNT_ID]:role/[YOUR_GITHUB_ACTIONS_ROLE]
+          aws-region: eu-west-1 # Can be any region
+
+      - name: Upload Binary to S3
+        env:
+          S3_BUCKET_URI: s3://215766861869-webapp-artifacts/builds
+        run: |
+          # This command places your binary at the exact path:
+          # s3://215766861869-webapp-artifacts/builds/v1.2.1/web-app
+          echo "Uploading build/web-app to ${S3_BUCKET_URI}/${{ env.APP_VERSION }}/web-app"
+          aws s3 cp build/web-app ${S3_BUCKET_URI}/${{ env.APP_VERSION }}/web-app
+
+      - name: Upload Complete
+        run: |
+          echo "✅ Successfully uploaded web-app version ${{ env.APP_VERSION }}"
+          echo "You can now deploy by updating your Terraform 'app_version' variable to '${{ env.APP_VERSION }}' and running 'terraform apply'."
