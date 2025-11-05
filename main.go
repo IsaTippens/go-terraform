@@ -34,7 +34,7 @@ func main() {
 	// -endpoint /health returns 200 OK
 	// -endpoint / returns "Hello {config.name}"
 
-	config, err := loadConfig("config.yaml")
+	config, err := loadConfig("config.yml")
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
