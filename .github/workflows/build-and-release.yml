@@ -45,12 +45,12 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           # Replace with the ARN of the IAM Role you create
-          role-to-assume: arn:aws:iam::[YOUR_AWS_ACCOUNT_ID]:role/[YOUR_GITHUB_ACTIONS_ROLE]
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_ROLE_NAME }}
           aws-region: eu-west-1 # Can be any region
 
       - name: Upload Binary to S3
         env:
-          S3_BUCKET_URI: s3://215766861869-webapp-artifacts/builds
+          S3_BUCKET_URI: s3://${{ secrets.S3_BUCKET_NAME }}/builds
         run: |
           # This command places your binary at the exact path:
           # s3://215766861869-webapp-artifacts/builds/v1.2.1/web-app
